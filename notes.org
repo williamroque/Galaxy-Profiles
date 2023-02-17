@@ -1,0 +1,20 @@
+#+title: Project Notes
+
+* Notes
+
+- To find central surface brightness, \( I_{0} = 10^{(m_{0} - b)/2.5} \)
+- To find disk scale length, \( h_{R} = \dfrac{2.5}{m \ln 10} \)
+- \( I(R) = I_{0} \exp\left[ -\dfrac{R}{h_{R}} \right] \)
+- \( I' = -2.5 \log_{10} I + m_{0} \)
+
+* Questions
+
+- What should the output be?
+  - Slope (convert to disk scale length) and intercept
+- What are reasonable parameter ranges for profile generation? Half light radius? Sérsic index? Find others in =profile.py=
+  - Read code comments
+
+* To do
+
+- Apply changes to random generation 
+- Better threshold location using bulge + disk and piecewise models from legacy 
