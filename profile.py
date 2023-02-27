@@ -2,8 +2,6 @@ import math
 
 import numpy as np
 
-import matplotlib.pyplot as plt
-
 from astropy.io import fits
 from scipy.signal import fftconvolve
 
@@ -11,7 +9,7 @@ kappa = 2.5 / math.log(10)
 
 
 class Profile:
-    def __init__(self, psf_file, m0, pix2sec, limmag, adderror, axis):
+    def __init__(self, psf_file, m0, pix2sec, limmag, adderror, axis, bounds=None):
         self.psf = np.genfromtxt(psf_file, unpack=True, usecols=[1])
         self.psf /= np.sum(self.psf)
 
@@ -20,6 +18,7 @@ class Profile:
         self.lim_mag = limmag # 30
         self.add_error = adderror
         self.axis = axis
+        self.bounds = bounds
 
         self.radii = []
         self.SB_values = []
@@ -136,14 +135,28 @@ class Profile:
             (self.radii < up)
         )
 
-    def fit(self, fitter_type):
+    def reduce_by(self, percentage):
+        indices = np.random.choice(
+            np.arange(0, len(self.radii)),
+            int((100 - percentage) * len(self.radii) / 100),
+            False
+        )
+        indices = np.sort(indices)
+
+        self.radii = self.radii[indices]
+        self.SB_values = self.SB_values[indices]
+        self.SB_std = self.SB_std[indices]
+
+    def fit(self, fitter_type, plot=True):
         fitter = fitter_type(
             self.radii,
             self.SB_values,
             self.SB_std,
             self.psf,
             self.magzpt,
-            self.axis
+            self.axis,
+            self.bounds,
+            plot
         )
         return fitter.fit()
 
