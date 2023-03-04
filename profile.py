@@ -7,6 +7,8 @@ from scipy.signal import fftconvolve
 
 kappa = 2.5 / math.log(10)
 
+MINIMUM_THRESHOLD = 1
+
 
 class Profile:
     def __init__(self, psf_file, m0, pix2sec, limmag, adderror, axis, bounds=None):
@@ -26,18 +28,11 @@ class Profile:
 
         self.outer_cutoff = None
 
-    def load(self, profile_file_name, profile_type, image_name):
+    def load(self, profile_file_name, profile_type):
         # Determine the center of the galaxy as the center of the image:
-        hdulist = fits.open(image_name)
-        inframe = hdulist[0].data
-        ny, nx = np.shape(inframe)
-        XC = nx/2.
-        YC = ny/2.
 
         self.ell_iraf = 0
         self.posang_iraf = 0
-        self.x_cen_iraf = []
-        self.y_cen_iraf = []
 
         if profile_type == 'iraf':
             # Load profile from iraf output
@@ -68,7 +63,7 @@ class Profile:
                 if mag > self.lim_mag:
                     break
 
-                if float(params[2]) <= 1:
+                if float(params[2]) <= MINIMUM_THRESHOLD:
                     self.outer_cutoff = dist
                     break
 
@@ -79,10 +74,6 @@ class Profile:
                     self.posang_iraf = float(params[8])
                 if params[9] != 'INDEF':
                     self.ell_iraf = 0  # float(params[6])
-                if params[10] != 'INDEF':
-                    self.x_cen_iraf.append(float(params[10]))
-                if params[12] != 'INDEF':
-                    self.y_cen_iraf.append(float(params[12]))
         else:
             for line in open(profile_file_name):
                 if line.startswith('#'):
@@ -100,7 +91,7 @@ class Profile:
                 if mag > self.lim_mag:
                     break
 
-                if params[1] <= 1:
+                if params[1] <= MINIMUM_THRESHOLD:
                     self.outer_cutoff = dist
                     break
 
@@ -109,14 +100,10 @@ class Profile:
                 self.SB_std.append(mag_std)
                 self.posang_iraf = 0
                 self.ell_iraf = 0
-                self.x_cen_iraf.append(XC)
-                self.y_cen_iraf.append(YC)
 
         self.radii = np.array(self.radii)
         self.SB_values = np.array(self.SB_values)
         self.SB_std = np.array(self.SB_std)
-        self.x_cen_iraf = np.median(self.x_cen_iraf)
-        self.y_cen_iraf = np.median(self.y_cen_iraf)
 
         if self.outer_cutoff is None:
             self.radii[-1]

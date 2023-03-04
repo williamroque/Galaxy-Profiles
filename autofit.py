@@ -12,6 +12,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
+plt.rcParams['text.usetex'] = True
+
 from libs.fitters import BulgeDiskAutoFitter
 from profile import Profile
 
@@ -20,6 +22,9 @@ warnings.filterwarnings('ignore')
 
 def main(args, profile_path):
     fig, ax = plt.subplots()
+
+    ax.set_xlabel(r'$r$ (arcsec)')
+    ax.set_ylabel(r'$\mu$ (mag arcsec$^{-2}$)')
 
     basename = os.path.basename(
         os.path.dirname(profile_path)
@@ -59,8 +64,7 @@ def main(args, profile_path):
 
     profile.load(
         profile_path,
-        args.profile_type,
-        'Galex_images/PGC3377_sky_subtr_n.fits'
+        args.profile_type
     )
 
     ax.set_ylim([
@@ -74,6 +78,10 @@ def main(args, profile_path):
     }
     fitter_type = fitters[args.fitter]
 
+    radii_final = None
+    sb_final = None
+    slopes = []
+    intercepts = []
     I_0_values = []
     h_R_values = []
 
@@ -81,18 +89,41 @@ def main(args, profile_path):
         if len(profile.radii) < 10 or len(profile.SB_values) < 10:
             break
 
-        I_0, h_R, inner_cutoff = profile.fit(fitter_type, i == 0)
+        I_0, h_R, inner_cutoff, slope, intercept, radii, sb_values = profile.fit(
+            fitter_type, i == 0
+        )
 
+        if i == 0:
+            radii_final = radii
+            sb_final = sb_values
+
+        slopes.append(slope)
+        intercepts.append(intercept)
         I_0_values.append(I_0)
         h_R_values.append(h_R)
 
         profile.reduce_by(args.mask)
 
+    intercept = intercepts[0]
+    slope = slopes[0]
     I_0 = I_0_values[0]
     h_R = h_R_values[0]
 
+    slope_std = np.std(slopes)
+    intercept_std = np.std(intercepts)
     I_0_std = np.std(I_0_values)
     h_R_std = np.std(h_R_values)
+
+    sb_error = slope_std*(radii_final - intercept) + slope*intercept_std
+
+    ax.fill_between(
+        radii_final,
+        sb_final - np.abs(sb_error),
+        sb_final + np.abs(sb_error),
+        alpha = 0.5,
+        edgecolor='#222',
+        facecolor='#111'
+    )
 
     figure_path = os.path.join(output_directory, 'plot.png')
     data_path = os.path.join(output_directory, 'fit.csv')

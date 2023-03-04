@@ -3,8 +3,6 @@ from scipy.interpolate import CubicSpline
 from scipy.signal import fftconvolve, savgol_filter
 from scipy.stats import linregress
 
-import matplotlib.pyplot as plt
-
 
 class BulgeDiskAutoFitter:
     RVALUE_THRESHOLD = 0.99
@@ -132,4 +130,4 @@ class BulgeDiskAutoFitter:
         if self.plot:
             self.axis.plot(self.radii, sb_values, 'k')
 
-        return I_0, h_R, radius
+        return I_0, h_R, radius, slope, radius, self.radii, sb_values
