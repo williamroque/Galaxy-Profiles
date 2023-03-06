@@ -91,11 +91,11 @@ class BulgeDiskAutoFitter:
                 if abs(rvalue) < self.__class__.RVALUE_THRESHOLD:
                     break
 
-            return slope, intercept, domain[i]
+            return domain[i:], slope, intercept, domain[i], domain[-1]
 
         inner_index = np.where(domain < self.bounds[0])[0]
         if len(inner_index):
-            inner_index = inner_index[0]
+            inner_index = inner_index[-1]
         else:
             inner_index = 0
 
@@ -116,18 +116,18 @@ class BulgeDiskAutoFitter:
             sb_values[inner_index:outer_index + 1]
         )
 
-        return slope, intercept, domain[inner_index]
+        return domain[inner_index:outer_index + 1], slope, intercept, self.bounds[0], self.bounds[1]
 
 
     def fit(self):
-        slope, intercept, radius = self.find_linear()
+        domain, slope, intercept, *bounds = self.find_linear()
 
         I_0 = 10**((self.ZP - intercept)/2.5)
         h_R = 2.5/(slope*np.log(10))
 
-        sb_values = slope*self.radii + intercept
+        sb_values = slope*domain + intercept
 
         if self.plot:
-            self.axis.plot(self.radii, sb_values, 'k')
+            self.axis.plot(domain, sb_values, 'k')
 
-        return I_0, h_R, radius, slope, radius, self.radii, sb_values
+        return I_0, h_R, bounds, domain, slope, intercept, sb_values

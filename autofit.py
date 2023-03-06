@@ -78,7 +78,8 @@ def main(args, profile_path):
     }
     fitter_type = fitters[args.fitter]
 
-    radii_final = None
+    bounds_final = None
+    domain_final = None
     sb_final = None
     slopes = []
     intercepts = []
@@ -89,12 +90,13 @@ def main(args, profile_path):
         if len(profile.radii) < 10 or len(profile.SB_values) < 10:
             break
 
-        I_0, h_R, inner_cutoff, slope, intercept, radii, sb_values = profile.fit(
+        I_0, h_R, bounds, domain, slope, intercept, sb_values = profile.fit(
             fitter_type, i == 0
         )
 
         if i == 0:
-            radii_final = radii
+            bounds_final = bounds
+            domain_final = domain
             sb_final = sb_values
 
         slopes.append(slope)
@@ -114,10 +116,10 @@ def main(args, profile_path):
     I_0_std = np.std(I_0_values)
     h_R_std = np.std(h_R_values)
 
-    sb_error = slope_std*(radii_final - intercept) + slope*intercept_std
+    sb_error = slope_std*(domain_final - intercept) + slope*intercept_std
 
     ax.fill_between(
-        radii_final,
+        domain_final,
         sb_final - np.abs(sb_error),
         sb_final + np.abs(sb_error),
         alpha = 0.5,
@@ -142,8 +144,7 @@ def main(args, profile_path):
             'central_SB_std'
         ])
         writer.writerow([
-            inner_cutoff,
-            profile.outer_cutoff,
+            *bounds_final,
             h_R,
             h_R_std,
             I_0,
