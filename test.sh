@@ -1,1 +1,1 @@
-python3 autofit.py ~/desktop/output psf_azim_model.txt results_stellarmasses/TNG000001_O1/ellipse.txt results_stellarmasses/TNG000001_O2/ellipse.txt results_stellarmasses/TNG000001_O3/ellipse.txt --profile-type iraf --fitter bulge-disk-auto --ZP 20.08 --pix2sec 1.5 --SBlim 26 --realizations 50 --mask 20
+python3 autofit.py ~/desktop/output psf_azim_model.txt results_stellarmasses/TNG000001_O{1..5}/ellipse.txt --profile-type iraf --fitter bulge-disk-auto --ZP 20.08 --pix2sec 1.5 --SBlim 26 --realizations 50 --mask 20

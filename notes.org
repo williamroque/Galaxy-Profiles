@@ -18,3 +18,4 @@
 
 - Apply changes to random generation 
 - Better threshold location using bulge + disk and piecewise models from legacy 
+- Split radial axis into bins in order to get STD and spread (15 or so)

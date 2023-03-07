@@ -81,47 +81,54 @@ def main(args, profile_path):
     bounds_final = None
     domain_final = None
     sb_final = None
-    slopes = []
-    intercepts = []
+
     I_0_values = []
     h_R_values = []
+
+    sb_bins = []
+    bin_size = 20
 
     for i in range(args.realizations):
         if len(profile.radii) < 10 or len(profile.SB_values) < 10:
             break
 
-        I_0, h_R, bounds, domain, slope, intercept, sb_values = profile.fit(
+        I_0, h_R, bounds, domain, sb_values = profile.fit(
             fitter_type, i == 0
         )
+
+        for j in range(len(domain) // bin_size):
+            start = j * bin_size
+            end = (j + 1) * bin_size
+
+            if j >= len(sb_bins):
+                sb_bins.append([np.mean(sb_values[start:end])])
+            else:
+                sb_bins[j].append(np.mean(sb_values[start:end]))
 
         if i == 0:
             bounds_final = bounds
             domain_final = domain
             sb_final = sb_values
 
-        slopes.append(slope)
-        intercepts.append(intercept)
         I_0_values.append(I_0)
         h_R_values.append(h_R)
 
         profile.reduce_by(args.mask)
 
-    intercept = intercepts[0]
-    slope = slopes[0]
     I_0 = I_0_values[0]
     h_R = h_R_values[0]
 
-    slope_std = np.std(slopes)
-    intercept_std = np.std(intercepts)
     I_0_std = np.std(I_0_values)
     h_R_std = np.std(h_R_values)
 
-    sb_error = slope_std*(domain_final - intercept) + slope*intercept_std
+    sb_std = np.array(
+        [np.std(sb_bin) for sb_bin in sb_bins for _ in range(bin_size)]
+    )
 
     ax.fill_between(
         domain_final,
-        sb_final - np.abs(sb_error),
-        sb_final + np.abs(sb_error),
+        sb_final - np.abs(sb_std),
+        sb_final + np.abs(sb_std),
         alpha = 0.5,
         edgecolor='#222',
         facecolor='#111'
