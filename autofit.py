@@ -96,6 +96,11 @@ def main(args, profile_path):
             fitter_type, i == 0
         )
 
+        I_0_mean = abs(np.mean(I_0_values)) if len(I_0_values) > 0 else I_0
+
+        if I_0 < 0 or not (I_0_mean / 4 < I_0 < I_0_mean * 4):
+            continue
+
         for j in range(len(domain) // bin_size):
             start = j * bin_size
             end = (j + 1) * bin_size
@@ -106,6 +111,7 @@ def main(args, profile_path):
                 sb_bins[j].append(np.mean(sb_values[start:end]))
 
         if i == 0:
+            profile.bounds = bounds
             bounds_final = bounds
             domain_final = domain
             sb_final = sb_values
@@ -213,7 +219,7 @@ if __name__ == '__main__':
         '--adderr',
         help = 'Optional: Input additional error',
         type = float,
-        default = 0.000740
+        default = 0
     )
 
     args = parser.parse_args()

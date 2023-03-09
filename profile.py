@@ -7,8 +7,6 @@ from scipy.signal import fftconvolve
 
 kappa = 2.5 / math.log(10)
 
-MINIMUM_THRESHOLD = 1
-
 
 class Profile:
     def __init__(self, psf_file, m0, pix2sec, limmag, adderror, axis, bounds=None):
@@ -63,10 +61,6 @@ class Profile:
                 if mag > self.lim_mag:
                     break
 
-                if float(params[2]) <= MINIMUM_THRESHOLD:
-                    self.outer_cutoff = dist
-                    break
-
                 self.radii.append(dist)
                 self.SB_values.append(mag)
                 self.SB_std.append(mag_std)
@@ -89,10 +83,6 @@ class Profile:
                 mag_std = flux_std * (2.5/np.log(10)) / flux
 
                 if mag > self.lim_mag:
-                    break
-
-                if params[1] <= MINIMUM_THRESHOLD:
-                    self.outer_cutoff = dist
                     break
 
                 self.radii.append(dist)
