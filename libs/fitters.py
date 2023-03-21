@@ -83,15 +83,17 @@ class BulgeDiskAutoFitter:
 
         if self.bounds is None:
             for i in range(len(domain) - 2, -1, -1):
-                slope, intercept, rvalue, *_ = linregress(
+                result = linregress(
                     domain[i:],
                     sb_values[i:]
                 )
+                slope, intercept, rvalue, pvalue, m_std = result
+                b_std = result.intercept_stderr
 
                 if abs(rvalue) < self.__class__.RVALUE_THRESHOLD:
                     break
 
-            return domain, slope, intercept, domain[i], domain[-1]
+            return domain, slope, intercept, m_std, b_std, domain[i], domain[-1]
 
         inner_index = np.where(domain < self.bounds[0])[0]
         if len(inner_index):
@@ -111,23 +113,28 @@ class BulgeDiskAutoFitter:
             inner_index -= 1
             outer_index += 1
 
-        slope, intercept, *_ = linregress(
+        result = linregress(
             domain[inner_index:outer_index + 1],
             sb_values[inner_index:outer_index + 1]
         )
+        slope, intercept, rvalue, pvalue, m_std = result
+        b_std = result.intercept_stderr
 
-        return domain, slope, intercept, self.bounds[0], self.bounds[1]
+        return domain, slope, intercept, m_std, b_std, self.bounds[0], self.bounds[1]
 
 
     def fit(self):
-        domain, slope, intercept, *bounds = self.find_linear()
+        domain, slope, intercept, m_std, b_std, *bounds  = self.find_linear()
 
         I_0 = 10**((self.ZP - intercept)/2.5)
         h_R = 2.5/(slope*np.log(10))
+
+        I_0_std = b_std * np.log(10)/2.5 * 10**((self.ZP - intercept)/2.5)
+        h_R_std = m_std * 2.5/(slope**2 * np.log(10))
 
         sb_values = slope*domain + intercept
 
         if self.plot:
             self.axis.plot(domain, sb_values, 'k')
 
-        return I_0, h_R, bounds, domain, sb_values
+        return I_0, h_R, bounds, domain, sb_values, I_0_std, h_R_std

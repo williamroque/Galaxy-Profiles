@@ -19,6 +19,74 @@ from profile import Profile
 
 warnings.filterwarnings('ignore')
 
+BOOTSTRAP = False
+
+
+def bootstrap(args, profile, fitter_type, ax):
+    bounds_final = None
+    domain_final = None
+    sb_final = None
+
+    I_0_values = []
+    h_R_values = []
+
+    sb_bins = []
+    bin_size = 20
+
+    for i in range(args.realizations):
+        if len(profile.radii) < 10 or len(profile.SB_values) < 10:
+            break
+
+        I_0, h_R, bounds, domain, sb_values, *_ = profile.fit(
+            fitter_type, i == 0
+        )
+
+        I_0_mean = abs(np.mean(I_0_values)) if len(I_0_values) > 0 else I_0
+
+        if I_0 < 0 or not (I_0_mean / 4 < I_0 < I_0_mean * 4):
+            continue
+
+        for j in range(len(domain) // bin_size):
+            start = j * bin_size
+            end = (j + 1) * bin_size
+
+            if j >= len(sb_bins):
+                sb_bins.append([np.mean(sb_values[start:end])])
+            else:
+                sb_bins[j].append(np.mean(sb_values[start:end]))
+
+        if i == 0:
+            profile.bounds = bounds
+            bounds_final = bounds
+            domain_final = domain
+            sb_final = sb_values
+
+        I_0_values.append(I_0)
+        h_R_values.append(h_R)
+
+        profile.reduce_by(args.mask)
+
+    I_0 = I_0_values[0]
+    h_R = h_R_values[0]
+
+    I_0_std = np.std(I_0_values)
+    h_R_std = np.std(h_R_values)
+
+    sb_std = np.array(
+        [np.std(sb_bin) for sb_bin in sb_bins for _ in range(bin_size)]
+    )
+
+    ax.fill_between(
+        domain_final,
+        sb_final - np.abs(sb_std),
+        sb_final + np.abs(sb_std),
+        alpha = 0.5,
+        edgecolor='#222',
+        facecolor='#111'
+    )
+
+    return I_0, h_R, I_0_std, h_R_std, bounds_final
+
 
 def main(args, profile_path):
     fig, ax = plt.subplots()
@@ -78,67 +146,17 @@ def main(args, profile_path):
     }
     fitter_type = fitters[args.fitter]
 
-    bounds_final = None
-    domain_final = None
-    sb_final = None
-
-    I_0_values = []
-    h_R_values = []
-
-    sb_bins = []
-    bin_size = 20
-
-    for i in range(args.realizations):
-        if len(profile.radii) < 10 or len(profile.SB_values) < 10:
-            break
-
-        I_0, h_R, bounds, domain, sb_values = profile.fit(
-            fitter_type, i == 0
+    if BOOTSTRAP:
+        I_0, h_R, I_0_std, h_R_std, bounds = bootstrap(
+            args, profile, fitter_type, ax
+        )
+    else:
+        I_0, h_R, bounds, domain, sb_values, I_0_std, h_R_std = profile.fit(
+            fitter_type, True
         )
 
-        I_0_mean = abs(np.mean(I_0_values)) if len(I_0_values) > 0 else I_0
-
-        if I_0 < 0 or not (I_0_mean / 4 < I_0 < I_0_mean * 4):
-            continue
-
-        for j in range(len(domain) // bin_size):
-            start = j * bin_size
-            end = (j + 1) * bin_size
-
-            if j >= len(sb_bins):
-                sb_bins.append([np.mean(sb_values[start:end])])
-            else:
-                sb_bins[j].append(np.mean(sb_values[start:end]))
-
-        if i == 0:
-            profile.bounds = bounds
-            bounds_final = bounds
-            domain_final = domain
-            sb_final = sb_values
-
-        I_0_values.append(I_0)
-        h_R_values.append(h_R)
-
-        profile.reduce_by(args.mask)
-
-    I_0 = I_0_values[0]
-    h_R = h_R_values[0]
-
-    I_0_std = np.std(I_0_values)
-    h_R_std = np.std(h_R_values)
-
-    sb_std = np.array(
-        [np.std(sb_bin) for sb_bin in sb_bins for _ in range(bin_size)]
-    )
-
-    ax.fill_between(
-        domain_final,
-        sb_final - np.abs(sb_std),
-        sb_final + np.abs(sb_std),
-        alpha = 0.5,
-        edgecolor='#222',
-        facecolor='#111'
-    )
+    ax.axvline(x = bounds[0], color = 'k')
+    ax.axvline(x = bounds[1], color = 'k')
 
     figure_path = os.path.join(output_directory, 'plot.png')
     data_path = os.path.join(output_directory, 'fit.csv')
@@ -157,7 +175,7 @@ def main(args, profile_path):
             'central_SB_std'
         ])
         writer.writerow([
-            *bounds_final,
+            *bounds,
             h_R,
             h_R_std,
             I_0,

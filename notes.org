@@ -2,8 +2,12 @@
 
 * Notes
 
-- To find central surface brightness, \( I_{0} = 10^{(m_{0} - b)/2.5} \)
-- To find disk scale length, \( h_{R} = \dfrac{2.5}{m \ln 10} \)
+- To find central surface brightness, \( I_{0} = f(b) = 10^{(m_{0} - b)/2.5} \)
+  - \( \dv{f}{b} = -\dfrac{\ln 10}{2.5} 10^{\left( m_{0} - b \right)/2.5} \)
+  - \( \sigma_{I_{0}} = \abs{\dv{f}{b} \sigma_{b}} = \left[ \dfrac{\ln 10}{2.5} 10^{\left( m_{0} - b \right)/2.5} \right] \sigma_{b} \)
+- To find disk scale length, \( h_{R} = g(m) = \dfrac{2.5}{m \ln 10} \)
+  - \( \dv{g}{m} = -\dfrac{2.5}{m^2 \ln 10} \)
+  - \( \sigma_{h_{R}} = \abs{\dv{g}{m} \sigma_{m}} = \left[ \dfrac{2.5}{m^2 \ln 10} \right] \sigma_{m} \)
 - \( I(R) = I_{0} \exp\left[ -\dfrac{R}{h_{R}} \right] \)
 - \( I' = -2.5 \log_{10} I + m_{0} \)
 
@@ -16,6 +20,6 @@
 
 * To do
 
-- Apply changes to random generation 
-- Better threshold location using bulge + disk and piecewise models from legacy 
 - Split radial axis into bins in order to get STD and spread (15 or so)
+- Use =linregress= errors and propagate using derivatives
+- Indicate inner and outer radii by vertical line
