@@ -155,8 +155,8 @@ def main(args, profile_path):
             fitter_type, True
         )
 
-    ax.axvline(x = bounds[0], color = 'k')
-    ax.axvline(x = bounds[1], color = 'k')
+    ax.axvline(x = bounds[0], color = 'k', ls='--')
+    ax.axvline(x = bounds[1], color = 'k', ls='--')
 
     figure_path = os.path.join(output_directory, 'plot.png')
     data_path = os.path.join(output_directory, 'fit.csv')
